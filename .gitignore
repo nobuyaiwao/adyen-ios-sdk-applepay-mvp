@@ -1,0 +1,52 @@
+# macOS
+.DS_Store
+Thumbs.db
+
+# Xcode build products and per-user state
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive/
+
+# Swift Package Manager
+.build/
+
+# Python virtual environments, caches, and generated packages
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+dist/
+
+# Local environment files; retain checked-in examples
+.env
+.env.*
+!.env*.example
+
+# Local signing configuration and credentials
+Secrets.*.xcconfig
+*.cer
+*.p12
+*.p8
+*.pfx
+*.key
+*.pem
+*.csr
+*.mobileprovision
+*.provisionprofile

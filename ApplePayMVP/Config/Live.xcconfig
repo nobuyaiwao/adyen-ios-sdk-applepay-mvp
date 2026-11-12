@@ -1,0 +1,3 @@
+#include "Base.xcconfig"
+APP_ENVIRONMENT = live
+#include? "Secrets.live.xcconfig"

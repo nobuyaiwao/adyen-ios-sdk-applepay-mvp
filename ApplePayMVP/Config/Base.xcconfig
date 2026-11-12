@@ -1,0 +1,9 @@
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+SWIFT_VERSION = 5.0
+TARGETED_DEVICE_FAMILY = 1,2
+CODE_SIGN_STYLE = Automatic
+PRODUCT_BUNDLE_IDENTIFIER = com.example.ApplePayMVP
+DEVELOPMENT_TEAM =
+APPLE_PAY_MERCHANT_ID = merchant.com.example.applepaymvp
+// $() keeps // from being parsed as an xcconfig comment.
+BACKEND_URL = http:/$()/localhost:8080
