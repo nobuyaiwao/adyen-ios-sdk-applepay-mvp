@@ -2,8 +2,7 @@
 
 A small SwiftUI iOS app for manually testing Apple Pay with your own Apple
 Merchant ID and Payment Processing Certificate. Uses native PassKit, **no Adyen
-iOS SDK**. The Flask setup follows `~/git/adyen-ios-sdk-demo`, but calls
-`/payments` instead of `/sessions`.
+iOS SDK**. 
 
 This is an integration test harness, not a production checkout or a replacement
 for a real-device Apple Pay test. Automated tests use synthetic tokens and
