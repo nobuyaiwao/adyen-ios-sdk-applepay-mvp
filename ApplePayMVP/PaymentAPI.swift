@@ -68,6 +68,17 @@ struct PaymentConfiguration: Decodable {
     }
 
     static let networks: [PKPaymentNetwork] = [.visa, .masterCard, .amex, .JCB, .discover]
+
+    #if DEBUG
+    static let testConfiguration = PaymentConfiguration(
+        environment: "test",
+        amount: PaymentAmount(currency: "JPY", value: 100),
+        minorUnits: 0,
+        countryCode: "JP",
+        merchantName: "Apple Pay Token Test"
+    )
+    #endif
+
 }
 
 struct PaymentSubmission: Encodable {

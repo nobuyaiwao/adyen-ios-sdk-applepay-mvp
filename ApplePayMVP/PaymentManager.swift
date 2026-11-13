@@ -32,13 +32,23 @@ final class PaymentManager: NSObject, ObservableObject, PKPaymentAuthorizationCo
         defer { isLoading = false }
         do {
             let settings = try AppConfiguration.load()
+            appConfiguration = settings
+
+            #if DEBUG
+            let config = PaymentConfiguration.testConfiguration
+            try config.validate(environment: settings.environment)
+            configuration = config
+            api = nil
+            status = "Ready. Apple Pay Token Capture Mode."
+            #else
             let client = PaymentAPI(baseURL: settings.backendURL)
             let config = try await client.configuration()
             try config.validate(environment: settings.environment)
-            appConfiguration = settings
             api = client
             configuration = config
             status = "Ready. Authorize Apple Pay to submit one /payments request."
+            #endif
+
         } catch {
             status = error.localizedDescription
         }
@@ -71,39 +81,91 @@ final class PaymentManager: NSObject, ObservableObject, PKPaymentAuthorizationCo
         didAuthorizePayment payment: PKPayment,
         handler completion: @escaping (PKPaymentAuthorizationResult) -> Void
     ) {
-        guard !submitted, let configuration, let api, let requestID else {
-            completion(PKPaymentAuthorizationResult(status: .failure, errors: [
-                PaymentError.message("Start a new payment attempt.")
-            ]))
+        guard !submitted,
+              configuration != nil,
+              requestID != nil else {
+            completion(PKPaymentAuthorizationResult(
+                status: .failure,
+                errors: [PaymentError.message("Start a new payment attempt.")]
+            ))
             return
         }
+    
         submitted = true
         isSubmitting = true
+    
+        #if DEBUG
+        let tokenData = payment.token.paymentData
+    
+        guard !tokenData.isEmpty else {
+            status = "Apple Pay returned empty token data."
+            isSubmitting = false
+            completion(PKPaymentAuthorizationResult(
+                status: .failure,
+                errors: [PaymentError.message("Empty Apple Pay Token.")]
+            ))
+            return
+        }
+    
+        print("========== APPLE PAY TOKEN BEGIN ==========")
+        print(tokenData.base64EncodedString())
+        print("========== APPLE PAY TOKEN END ==========")
+    
+        status = "Token captured. No payment submitted."
+        isSubmitting = false
+    
+        completion(PKPaymentAuthorizationResult(
+            status: .failure,
+            errors: [PaymentError.message("Token captured for testing only.")]
+        ))
+    
+        #else
+        guard let api,
+              let configuration,
+              let requestID else {
+            isSubmitting = false
+            completion(PKPaymentAuthorizationResult(
+                status: .failure,
+                errors: [PaymentError.message("Payment configuration unavailable.")]
+            ))
+            return
+        }
+    
         status = "Token received. Submitting to Adyen…"
+    
         Task {
             defer { isSubmitting = false }
+    
             do {
                 let submission = try PaymentSubmission(
                     paymentData: payment.token.paymentData,
                     amount: configuration.amount,
                     requestID: requestID
                 )
+    
                 let response = try await api.pay(submission)
                 result = response
+    
                 status = response.requiresAction == true
                     ? "Additional action required, unsupported by this MVP. Check Adyen."
                     : "Adyen result: \(response.resultCode)"
+    
                 completion(PKPaymentAuthorizationResult(
                     status: response.authorised ? .success : .failure,
                     errors: response.authorised ? nil : [PaymentError.message(status)]
                 ))
             } catch {
                 status = "\(error.localizedDescription)\nIf submitted, the outcome may be unknown. Check Adyen before trying again.\nReference: applepay-\(requestID.uuidString.lowercased())"
-                completion(PKPaymentAuthorizationResult(status: .failure, errors: [
-                    PaymentError.message("Payment could not be confirmed. Check the app and Adyen.")
-                ]))
+    
+                completion(PKPaymentAuthorizationResult(
+                    status: .failure,
+                    errors: [
+                        PaymentError.message("Payment could not be confirmed. Check the app and Adyen.")
+                    ]
+                ))
             }
         }
+        #endif
     }
 
     func paymentAuthorizationControllerDidFinish(_ controller: PKPaymentAuthorizationController) {
